@@ -20,6 +20,14 @@ class QueryTests : XCTestCase {
     func test_select_withExpression_compilesSelectClause() {
         AssertSQL("SELECT \"email\" FROM \"users\"", users.select(email))
     }
+    
+    func test_select_withStarExpression_compilesSelectClause() {
+        AssertSQL("SELECT * FROM \"users\"", users.select(*))
+    }
+    
+    func test_select_withNamespacedStarExpression_compilesSelectClause() {
+        AssertSQL("SELECT \"users\".* FROM \"users\"", users.select(users[*]))
+    }
 
     func test_select_withVariadicExpressions_compilesSelectClause() {
         AssertSQL("SELECT \"email\", count(*) FROM \"users\"", users.select(email, count(*)))
@@ -118,6 +126,10 @@ class QueryTests : XCTestCase {
 
     func test_order_withVariadicExpressionNames_compilesOrderClause() {
         AssertSQL("SELECT * FROM \"users\" ORDER BY \"age\", \"email\"", users.order(age, email))
+    }
+
+    func test_order_withArrayExpressionNames_compilesOrderClause() {
+        AssertSQL("SELECT * FROM \"users\" ORDER BY \"age\", \"email\"", users.order([age, email]))
     }
 
     func test_order_withExpressionAndSortDirection_compilesOrderClause() {
@@ -278,7 +290,7 @@ class QueryIntegrationTests : SQLiteTestCase {
     // MARK: -
 
     func test_select() {
-        for _ in db.prepare(users) {
+        for _ in try! db.prepare(users) {
             // FIXME
         }
 
@@ -288,7 +300,7 @@ class QueryIntegrationTests : SQLiteTestCase {
         let alice = try! db.run(users.insert(email <- "alice@example.com"))
         try! db.run(users.insert(email <- "betsy@example.com", managerId <- alice))
 
-        for user in db.prepare(users.join(managers, on: managers[id] == users[managerId])) {
+        for user in try! db.prepare(users.join(managers, on: managers[id] == users[managerId])) {
             user[users[managerId]]
         }
     }
